@@ -41,6 +41,11 @@ describe Slugable::HasSlug do
       item.slug.should eq "my-name-is"
     end
 
+    it "should fill in slug from attribute name if parameterize version of slug is blank", :focus => true do
+      item = Item.create!(:name => "my name is", :slug => "/")
+      item.slug.should eq "my-name-is"
+    end
+
     it "should only parametrize slug attribute if slug is present" do
       item = Item.create!(:name => "my name is", :slug => "my url")
       item.slug.should eq "my-url"
@@ -56,8 +61,13 @@ describe Slugable::HasSlug do
       Page.new.should respond_to :format_slug_from_title_to_seo_url
     end
 
-    it "should fill in slug parameter from attribute name and parametrize it" do
+    it "should fill in slug parameter from attribute title and parametrize it" do
       page = Page.create!(:title => "my name is")
+      page.seo_url.should eq "my-name-is"
+    end
+
+    it "should fill in slug parameter from attribute title if parameterize version of slug is blank" do
+      page = Page.create!(:title => "my name is", :seo_url => "/")
       page.seo_url.should eq "my-name-is"
     end
 
@@ -69,7 +79,7 @@ describe Slugable::HasSlug do
 
   describe "to_slug" do
     context "default options" do
-      it "should define mehtod to_seo_url" do
+      it "should define method to_seo_url" do
         Item.new.should respond_to :to_slug
       end
 
@@ -80,7 +90,7 @@ describe Slugable::HasSlug do
     end
 
     context "given options" do
-      it "should define mehtod to_seo_url" do
+      it "should define method to_seo_url" do
         Page.new.should respond_to :to_seo_url
       end
 

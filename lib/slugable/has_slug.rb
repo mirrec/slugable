@@ -23,11 +23,11 @@ module Slugable
       # generate this
       #
       # def fill_slug
-      #   self.slug = name unless slug.present?
+      #   self.slug = name if slug.blank? || slug.parameterize.blank?
       # end
       code =<<-method
         def fill_slug_from_#{from}_to_#{to}
-          self.#{to} = #{from} unless #{to}.present?
+          self.#{to} = #{from} if #{to}.blank? || #{to}.parameterize.blank?
         end
       method
       class_eval(code)
