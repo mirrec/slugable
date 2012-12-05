@@ -1,4 +1,4 @@
-# 0.0.2
+# 0.0.2 (December 5, 2012)
 ## fixed
 * fill in slug from name parameter if slug.parameterize is blank
 
