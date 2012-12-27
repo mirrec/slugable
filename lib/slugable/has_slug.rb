@@ -98,7 +98,7 @@ module Slugable
       #
       # def to_slug
       #  if respond_to?(:path_ids)
-      #    slugs = path_ids.map{|id| self.class.cached_slug(id)}.select{|i| i.size > 0 }
+      #    slugs = path.map{|record| record.send(:"slug")}.select{|i| i.size > 0 }
       #    if slugs.empty?
       #      ""
       #    else
@@ -111,7 +111,7 @@ module Slugable
       code =<<-method
         def to_#{to}
           if respond_to?(:path_ids)
-            slugs = path_ids.map{|id| self.class.cached_#{to}(id)}.select{|i| i.size > 0 }
+            slugs = path.map{|record| record.send(:"#{to}")}.select{|i| i.size > 0 }
             if slugs.empty?
               ""
             else

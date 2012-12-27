@@ -3,19 +3,19 @@ require "spec_helper"
 ActiveRecord::Base.send :extend, Slugable::HasSlug
 
 class Item < ActiveRecord::Base
-  attr_accessor :name, :slug
+  attr_accessible :name, :slug
 
   has_slug
 end
 
 class Page < ActiveRecord::Base
-  attr_accessor :title, :seo_url
+  attr_accessible :title, :seo_url
 
   has_slug :from => :title, :to => :seo_url
 end
 
 class Category < ActiveRecord::Base
-  attr_accessor :name, :slug
+  attr_accessible :name, :slug
 
   has_ancestry
   has_slug
@@ -101,7 +101,7 @@ describe Slugable::HasSlug do
     end
 
     context "ancestry model" do
-      it "should return array of slugs" do
+      it "should return array of slugs", :focus => true do
         root = Category.create!(:name => "root", :slug => "root")
         child = Category.new(:name => "child", :slug => "child")
         child.parent = root

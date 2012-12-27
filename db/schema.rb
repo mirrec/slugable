@@ -10,7 +10,7 @@ ActiveRecord::Schema.define do
 
   create_table "pages", :force => true do |t|
     t.string "title"
-    t.string "seo_path"
+    t.string "seo_url"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
   end
