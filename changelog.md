@@ -1,8 +1,16 @@
-# 0.0.2 (December 27, 2012)
+# 0.0.3 (March 04, 2013)
+## added
+* config for allowing or disabling caching
+* `to_slug_was` for getting old values of object `to_slug`
+* `to_slug_will` for getting future values of object `to_slug`
+* options for specifying string formatting method
+* options for enabling or disabling cacing slugs for tree
+
+# 0.0.3.beta (December 27, 2012)
 ## changed
 * skip cache in tree
 ## fixed
-* tests and schema for propriate testing
+* tests and schema for appropriate testing
 
 # 0.0.2 (December 5, 2012)
 ## fixed
