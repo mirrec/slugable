@@ -101,9 +101,9 @@ module Slugable
       # def to_slug
       #  if respond_to?(:path_ids)
       #    slugs = if true
-      #      path_ids.map{|id| self.class.cached_slug(id)}.select{|i| i.size > 0 }
+      #      path_ids.map{|id| self.class.cached_slug(id)}.compact.select{|i| i.size > 0 }
       #    else
-      #      path.map{|record| record.send(:"slug")}.select{|i| i.size > 0 }
+      #      path.map{|record| record.send(:"slug")}.compact.select{|i| i.size > 0 }
       #    end
       #    slugs.empty? ? "" : slugs
       #  else
@@ -114,9 +114,9 @@ module Slugable
         def to_#{to}
           if respond_to?(:path_ids)
             slugs = if #{cache_tree}
-              path_ids.map{|id| self.class.cached_#{to}(id)}.select{|i| i.size > 0 }
+              path_ids.map{|id| self.class.cached_#{to}(id)}.compact.select{|i| i.size > 0 }
             else
-              path.map{|record| record.send(:"#{to}")}.select{|i| i.size > 0 }
+              path.map{|record| record.send(:"#{to}")}.compact.select{|i| i.size > 0 }
             end
             slugs.empty? ? "" : slugs
           else

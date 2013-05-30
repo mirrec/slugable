@@ -1,3 +1,7 @@
+# 0.0.4 (May 30, 2013)
+## fixed
+* `to_slug` method not skip nil in path
+
 # 0.0.3 (March 04, 2013)
 ## added
 * config for allowing or disabling caching

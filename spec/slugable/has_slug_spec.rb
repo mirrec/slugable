@@ -144,6 +144,18 @@ describe Slugable::HasSlug do
 
         child.to_slug.should eq ["root", "child"]
       end
+
+      it "should skip nil values from slug path" do
+        root = Category.create!(:name => "root", :slug => "root")
+        child = Category.new(:name => "child", :slug => "child")
+        child.parent = root
+        child.save!
+
+        Category.update_all({:slug => nil}, {:id => root.id})
+        Category.clear_cached_slugs
+
+        child.to_slug.should eq ["child"]
+      end
     end
   end
 
