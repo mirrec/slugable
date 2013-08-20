@@ -11,15 +11,19 @@ module Slugable
     # has_slug :from => :title                # generate to_slug
     # has_slug :to => :seo_url                # generate to_url
     # has_slug :from => :name, :to => :slug   # generate to_slug
+    # has_slug :validator => SomeValidator
     #
     def has_slug(options={})
-      defaults = {:from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true}
+      defaults = {:from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true, :validator => Slugable::Validator}
       options.reverse_merge!(defaults)
-      from = options.delete(:from)
-      to = options.delete(:to)
-      formatter = options.delete(:formatter)
+
+      from       = options.delete(:from)
+      to         = options.delete(:to)
+      formatter  = options.delete(:formatter)
       cache_tree = options.delete(:cache_tree)
-      before_save :"fill_slug_from_#{from}_to_#{to}", :"format_slug_from_#{from}_to_#{to}"
+      validator  = options.delete(:validator)
+
+      before_save :"fill_slug_from_#{from}_to_#{to}", :"format_slug_from_#{from}_to_#{to}", :"validate_slug_from_#{from}_to_#{to}"
       after_save :"update_my_#{to}_cache"
 
       # generate this
@@ -186,6 +190,17 @@ module Slugable
           end
       method
       class_eval(code)
+
+      # generate this
+      #
+      # def validate_slug_from_name_to_slug
+      #   validator.validate(record, to)
+      # end
+      class_eval do
+        define_method(:"validate_slug_from_#{from}_to_#{to}") do
+          validator.validate(self, to)
+        end
+      end
     end
   end
 end
