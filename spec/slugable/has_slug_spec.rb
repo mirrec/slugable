@@ -276,5 +276,37 @@ describe Slugable::HasSlug do
         Category.all_slugs.should eq({})
       end
     end
+
+    describe "validation" do
+      context "when initializing" do
+        it "should properly setup default validator" do
+          Item.new.should respond_to(:validate_slug_from_name_to_slug)
+        end
+
+        it "should properly setup custom validator" do
+          validator = double(:validator)
+
+          Item.class_eval { has_slug :validator => validator }
+
+          item = Item.new
+
+          validator.should_receive(:validate).with(item, :slug).and_return(true)
+
+          item.validate_slug_from_name_to_slug.should be_true
+        end
+
+        it "should properly setup validator for custom from and to fields" do
+          validator = double(:validator)
+
+          Item.class_eval { has_slug :from => :title, :to => :other, :validator => validator }
+
+          item = Item.new
+
+          validator.should_receive(:validate).with(item, :other).and_return(true)
+
+          item.validate_slug_from_title_to_other.should be_true
+        end
+      end
+    end
   end
 end
