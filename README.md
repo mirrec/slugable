@@ -9,7 +9,9 @@
 
 Add this line to your application's Gemfile:
 
-    gem 'slugable'
+```ruby
+gem 'slugable'
+```
 
 And then execute:
 
@@ -23,89 +25,94 @@ Or install it yourself as:
 
 in model use method has_slug
 
-    class Item < ActiveRecord::Base
-      attr_accessor :name, :slug
+```ruby
+class Item < ActiveRecord::Base
+  attr_accessor :name, :slug
 
-      has_slug # default :from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true
-    end
+  has_slug # default :from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true
+end
 
-    # then in code
-    item = Item.create!(:name => "my name is")
-    item.slug # => "my-name-is"
+# then in code
+item = Item.create!(:name => "my name is")
+item.slug # => "my-name-is"
 
-    item.to_slug # => "my-name-is"
+item.to_slug # => "my-name-is"
 
-    item.slug = "new-slug
+item.slug = "new-slug
 
-    item.to_slug_was  # => "my-name-is"
-    item.to_slug_will # => "new-slug"
-    item.to_slug      # => "new-slug"
+item.to_slug_was  # => "my-name-is"
+item.to_slug_will # => "new-slug"
+item.to_slug      # => "new-slug"
+```
 
 you can override defaults by passing hash
 
+```ruby
+class Page < ActiveRecord::Base
+  attr_accessor :title, :seo_url
 
-    class Page < ActiveRecord::Base
-      attr_accessor :title, :seo_url
+  has_slug :from => :title, :to => :seo_url, :formatter => :my_style
+end
 
-      has_slug :from => :title, :to => :seo_url, :formatter => :my_style
-    end
+class String
+  def my_style
+    self.parameterize
+  end
+end
 
-    class String
-      def my_style
-        self.parameterize
-      end
-    end
-
-    # then in code
-    page = Page.create!(:title => "my name is", :seo_url => "my url")
-    page.seo_url # => "my-url"
-    page.to_seo_url # => "my-url"
+# then in code
+page = Page.create!(:title => "my name is", :seo_url => "my url")
+page.seo_url # => "my-url"
+page.to_seo_url # => "my-url"
+```
 
 if you have model with ancestry gem 'https://github.com/stefankroes/ancestry'
 
+```ruby
+class Category < ActiveRecord::Base
+  attr_accessor :name, :slug
 
-    class Category < ActiveRecord::Base
-      attr_accessor :name, :slug
+  has_ancestry
+  has_slug
+end
 
-      has_ancestry
-      has_slug
-    end
+# then in code
+root = Category.create!(:name => "root", :slug => "root")
+root.slug # => "root"
+root.to_slug # => ["root"]
 
-    # then in code
-    root = Category.create!(:name => "root", :slug => "root")
-    root.slug # => "root"
-    root.to_slug # => ["root"]
+child = Category.new(:name => "child", :slug => "child")
+child.parent = root
+child.save!
 
-    child = Category.new(:name => "child", :slug => "child")
-    child.parent = root
-    child.save!
+child.slug # => "child"
+child.to_slug # => ["root", "child"]
 
-    child.slug # => "child"
-    child.to_slug # => ["root", "child"]
+branch = Category.create!(:name => "branch", :slug => "branch")
+child.parent = branch
+child.slug = "renamed"
 
-    branch = Category.create!(:name => "branch", :slug => "branch")
-    child.parent = branch
-    child.slug = "renamed"
+child.to_slug_was # => ["root", "child"]
+child.to_slug_will # => ["branch", "renamed"]
 
-    child.to_slug_was # => ["root", "child"]
-    child.to_slug_will # => ["branch", "renamed"]
-
-    child.to_slug # => ["root", "child"]
-    child.save!
-    child.to_slug # => ["branch", "renamed"]
+child.to_slug # => ["root", "child"]
+child.save!
+child.to_slug # => ["branch", "renamed"]
+```
 
 ## configuration
 
   By default all ancestry structure are cached to prevent useless calls to fetch same record from database just for slug values.
   You can pass :cache_tree option to disable it like this.
 
+```ruby
+class Category < ActiveRecord::Base
+  attr_accessor :name, :slug
 
-    class Category < ActiveRecord::Base
-      attr_accessor :name, :slug
-
-      has_ancestry
-      has_slug :cache_tree => false
-    end
+  has_ancestry
+  has_slug :cache_tree => false
+end
+```
 
 ## Contributing
 
