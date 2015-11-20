@@ -16,6 +16,80 @@ module Slugable
       MethodBuilder.build(self, options)
     end
 
+    class FlatSlugBuilder
+      attr_reader :record, :slug_column, :formatter
+
+      def initialize(record, slug_column, options)
+        @record = record
+        @slug_column = slug_column
+        @formatter = options.fetch(:formatter)
+      end
+
+      def to_slug
+        record.public_send(slug_column)
+      end
+
+      def to_slug_was
+        record.public_send(:"#{slug_column}_was")
+      end
+
+      def to_slug_will
+        formatter.call(record.public_send(slug_column))
+      end
+    end
+
+    class CachingAncestrySlugBuilder
+      attr_reader :record, :slug_column, :formatter, :cache
+
+      def initialize(record, slug_column, options)
+        @record = record
+        @slug_column = slug_column
+        @formatter = options.fetch(:formatter)
+        @cache = options.fetch(:cache)
+      end
+
+      def to_slug
+        slugs = record.path_ids.map{ |id| cache.public_send(:"cached_#{slug_column}", id) }.compact.select{|i| i.size > 0 }
+        slugs.empty? ? "" : slugs
+      end
+
+      def to_slug_was
+        old_slugs = record.ancestry_was.to_s.split("/").map { |ancestor_id| cache.public_send(:"cached_#{slug_column}", ancestor_id.to_i) }
+        old_slugs << record.public_send(:"#{slug_column}_was")
+        old_slugs
+      end
+
+      def to_slug_will
+        new_slugs = record.ancestry.to_s.split("/").map { |ancestor_id| cache.public_send(:"cached_#{slug_column}", ancestor_id.to_i) }
+        new_slugs << formatter.call(record.public_send(slug_column))
+        new_slugs
+      end
+    end
+
+    class AncestrySlugBuilder
+      attr_reader :record, :slug_column, :formatter
+
+      def initialize(record, slug_column, options)
+        @record = record
+        @slug_column = slug_column
+        @formatter = options.fetch(:formatter)
+      end
+
+      def to_slug
+        slugs = record.path.map{ |record| record.public_send(slug_column) }.compact.select{ |i| i.size > 0 }
+        slugs.empty? ? "" : slugs
+      end
+
+      def to_slug_was
+        old_slugs = record.ancestry_was.to_s.split("/").map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
+        old_slugs << record.public_send(:"#{slug_column}_was")
+      end
+
+      def to_slug_will
+        record.ancestry.to_s.split("/").map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
+      end
+    end
+
     class MethodBuilder
       def self.build(model, options)
         # constructing slug
@@ -35,6 +109,18 @@ module Slugable
           before_save :"prepare_slug_in_#{to}"
           after_save :"update_my_#{to}_cache"
 
+          define_method :"slug_builder_for_#{to}" do
+            if respond_to?(:path_ids)
+              if cache_tree
+                Slugable::HasSlug::CachingAncestrySlugBuilder.new(self, to, :formatter => formatter, :cache => self.class)
+              else
+                Slugable::HasSlug::AncestrySlugBuilder.new(self, to, :formatter => formatter)
+              end
+            else
+              Slugable::HasSlug::FlatSlugBuilder.new(self, to, :formatter => formatter)
+            end
+          end
+
           define_method :"prepare_slug_in_#{to}" do
             if public_send(to).blank? || formatter.call(public_send(to)).blank?
               public_send(:"#{to}=", public_send(from))
@@ -43,42 +129,15 @@ module Slugable
           end
 
           define_method :"to_#{to}" do
-            if respond_to?(:path_ids)
-              slugs = if cache_tree
-                        path_ids.map{ |id| self.class.public_send(:"cached_#{to}", id) }.compact.select{|i| i.size > 0 }
-                      else
-                        path.map{ |record| record.public_send(:"#{to}")}.compact.select{|i| i.size > 0 }
-                      end
-              slugs.empty? ? "" : slugs
-            else
-              public_send(to)
-            end
+            public_send(:"slug_builder_for_#{to}").to_slug
           end
 
           define_method :"to_#{to}_was" do
-            if respond_to?(:ancestry_was)
-              old_slugs = if cache_tree
-                            ancestry_was.to_s.split("/").map { |ancestor_id| self.class.public_send(:"cached_#{to}", ancestor_id.to_i) }
-                          else
-                            ancestry_was.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).public_send(to) }
-                          end
-              old_slugs << public_send(:"#{to}_was")
-            else
-              public_send(:"#{to}_was")
-            end
+            public_send(:"slug_builder_for_#{to}").to_slug_was
           end
 
           define_method :"to_#{to}_will" do
-            if respond_to?(:ancestry)
-              new_slugs = if cache_tree
-                            ancestry.to_s.split("/").map { |ancestor_id| self.class.public_send(:"cached_#{to}", ancestor_id.to_i) }
-                          else
-                            ancestry.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).public_send(to) }
-                          end
-              new_slugs << formatter.call(public_send(to))
-            else
-              formatter.call(public_send(to))
-            end
+            public_send(:"slug_builder_for_#{to}").to_slug_will
           end
 
           define_method :"update_my_#{to}_cache" do
