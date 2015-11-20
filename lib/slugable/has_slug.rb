@@ -22,7 +22,7 @@ module Slugable
         # building to_slug, to_slug_was, to_slug_will
         # caching slug
 
-        defaults = {:from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true}
+        defaults = {:from => :name, :to => :slug, :formatter => ParameterizeFormatter, :cache_tree => true}
         options.reverse_merge!(defaults)
         from = options.delete(:from)
         to = options.delete(:to)
@@ -36,10 +36,10 @@ module Slugable
           after_save :"update_my_#{to}_cache"
 
           define_method :"prepare_slug_in_#{to}" do
-            if public_send(to).blank? || public_send(to).public_send(:"#{formatter}").blank?
+            if public_send(to).blank? || formatter.call(public_send(to)).blank?
               public_send(:"#{to}=", public_send(from))
             end
-            public_send(:"#{to}=", public_send(to).public_send(:"#{formatter}"))
+            public_send(:"#{to}=", formatter.call(public_send(to)))
           end
 
           define_method :"to_#{to}" do
@@ -75,9 +75,9 @@ module Slugable
                           else
                             ancestry.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).public_send(to) }
                           end
-              new_slugs << public_send(to).public_send(formatter)
+              new_slugs << formatter.call(public_send(to))
             else
-              public_send(to).public_send(formatter)
+              formatter.call(public_send(to))
             end
           end
 
@@ -102,6 +102,12 @@ module Slugable
             public_send(:"all_#{to}s")[id].to_s
           end
         end
+      end
+    end
+
+    class ParameterizeFormatter
+      def self.call(string)
+        string.parameterize
       end
     end
   end

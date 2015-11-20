@@ -22,9 +22,8 @@ class TreeItem < ActiveRecord::Base
 end
 
 class Product < ActiveRecord::Base
-  has_slug :formatter => :my_formatter
+  has_slug :formatter => lambda { |string| "hello-all-the-time" }
 end
-
 
 describe Slugable::HasSlug do
   before(:each) do
@@ -76,10 +75,8 @@ describe Slugable::HasSlug do
     end
 
     it "should be able to change parameterize method" do
-      name = "product"
-      name.should_receive(:my_formatter).twice.and_return("hello")
-      product = Product.create!(:name => "my name is", :slug => name)
-      product.slug.should eq "hello"
+      product = Product.create!(:name => "my name is", :slug => "product")
+      product.slug.should eq "hello-all-the-time"
     end
 
     it "should be able to disable tree caching" do
