@@ -32,14 +32,13 @@ module Slugable
         model.class_eval do
           class_variable_set(:@@all, nil)
 
-          before_save :"fill_slug_from_#{from}_to_#{to}", :"format_slug_from_#{from}_to_#{to}"
+          before_save :"prepare_slug_in_#{to}"
           after_save :"update_my_#{to}_cache"
 
-          define_method :"fill_slug_from_#{from}_to_#{to}" do
-            public_send(:"#{to}=", public_send(from)) if public_send(to).blank? || public_send(to).parameterize.blank?
-          end
-
-          define_method :"format_slug_from_#{from}_to_#{to}" do
+          define_method :"prepare_slug_in_#{to}" do
+            if public_send(to).blank? || public_send(to).public_send(:"#{formatter}").blank?
+              public_send(:"#{to}=", public_send(from))
+            end
             public_send(:"#{to}=", public_send(to).public_send(:"#{formatter}"))
           end
 

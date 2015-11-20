@@ -33,11 +33,7 @@ describe Slugable::HasSlug do
 
   context "default options" do
     it "should create fill_slug_from_name_to_slug" do
-      Item.new.should respond_to :fill_slug_from_name_to_slug
-    end
-
-    it "should create format_slug_from_name_to_slug" do
-      Item.new.should respond_to :format_slug_from_name_to_slug
+      Item.new.should respond_to :prepare_slug_in_slug
     end
 
     it "should fill in slug parameter from attribute name and parametrize it" do
@@ -61,11 +57,7 @@ describe Slugable::HasSlug do
 
   context "given options" do
     it "should create fill_slug_from_title_to_seo_url" do
-      Page.new.should respond_to :fill_slug_from_title_to_seo_url
-    end
-
-    it "should create format_slug_from_title_to_seo_url" do
-      Page.new.should respond_to :format_slug_from_title_to_seo_url
+      Page.new.should respond_to :prepare_slug_in_seo_url
     end
 
     it "should fill in slug parameter from attribute title and parametrize it" do
@@ -85,7 +77,7 @@ describe Slugable::HasSlug do
 
     it "should be able to change parameterize method" do
       name = "product"
-      name.should_receive(:my_formatter).and_return("hello")
+      name.should_receive(:my_formatter).twice.and_return("hello")
       product = Product.create!(:name => "my name is", :slug => name)
       product.slug.should eq "hello"
     end
