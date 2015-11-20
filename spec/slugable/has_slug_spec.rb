@@ -1,36 +1,27 @@
 require "spec_helper"
+require 'pry'
 
 ActiveRecord::Base.send :extend, Slugable::HasSlug
 
 class Item < ActiveRecord::Base
-  attr_accessible :name, :slug
-
   has_slug
 end
 
 class Page < ActiveRecord::Base
-  attr_accessible :title, :seo_url
-
   has_slug :from => :title, :to => :seo_url
 end
 
 class Category < ActiveRecord::Base
-  attr_accessible :name, :slug
-
   has_ancestry
   has_slug
 end
 
 class TreeItem < ActiveRecord::Base
-  attr_accessible :name, :slug
-
   has_ancestry
   has_slug :cache_tree => false
 end
 
 class Product < ActiveRecord::Base
-  attr_accessible :name, :slug
-
   has_slug :formatter => :my_formatter
 end
 

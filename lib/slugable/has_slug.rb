@@ -13,179 +13,97 @@ module Slugable
     # has_slug :from => :name, :to => :slug   # generate to_slug
     #
     def has_slug(options={})
-      defaults = {:from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true}
-      options.reverse_merge!(defaults)
-      from = options.delete(:from)
-      to = options.delete(:to)
-      formatter = options.delete(:formatter)
-      cache_tree = options.delete(:cache_tree)
-      before_save :"fill_slug_from_#{from}_to_#{to}", :"format_slug_from_#{from}_to_#{to}"
-      after_save :"update_my_#{to}_cache"
+      MethodBuilder.build(self, options)
+    end
 
-      # generate this
-      #
-      # def fill_slug
-      #   self.slug = name if slug.blank? || slug.parameterize.blank?
-      # end
-      code =<<-method
-        def fill_slug_from_#{from}_to_#{to}
-          self.#{to} = #{from} if #{to}.blank? || #{to}.parameterize.blank?
-        end
-      method
-      class_eval(code)
+    class MethodBuilder
+      def self.build(model, options)
+        # constructing slug
+        # building to_slug, to_slug_was, to_slug_will
+        # caching slug
 
-      # generate this
-      #
-      # def format_slug
-      #   self.slug = slug.parameterize
-      # end
-      code =<<-method
-        def format_slug_from_#{from}_to_#{to}
-          self.#{to} = #{to}.send(:#{formatter})
-        end
-      method
-      class_eval(code)
+        defaults = {:from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true}
+        options.reverse_merge!(defaults)
+        from = options.delete(:from)
+        to = options.delete(:to)
+        formatter = options.delete(:formatter)
+        cache_tree = options.delete(:cache_tree)
 
-      # generate this
-      # def update_my_slug_cache
-      #  @@all ||= {}
-      #  @@all[id] = send(:slug)
-      # end
-      code =<<-method
-        def update_my_#{to}_cache
-          @@all ||= {}
-          @@all[id] = send(:#{to})
-        end
-      method
-      class_eval(code)
+        model.class_eval do
+          class_variable_set(:@@all, nil)
 
-      # generate this
-      #
-      # def self.all_slugs
-      #  slug_column = :slug
-      #  @@all ||= self.all.map_to_hash{|slug_element| {slug_element.id => slug_element.send(slug_column)}}
-      # end
-      code =<<-method
-        def self.all_#{to}s
-          @@all ||= self.all.map_to_hash{|slug_element| {slug_element.id => slug_element.send(:#{to})}}
-        end
-      method
-      class_eval(code)
+          before_save :"fill_slug_from_#{from}_to_#{to}", :"format_slug_from_#{from}_to_#{to}"
+          after_save :"update_my_#{to}_cache"
 
-      # generate this
-      #
-      # def self.clear_cached_slugs
-      #  @@all = nil
-      # end
-      code =<<-method
-        def self.clear_cached_#{to}s
-          @@all = nil
-        end
-      method
-      class_eval(code)
-
-      # generate this
-      #
-      # def self.cached_slug(id)
-      #  all_slugs[id]
-      # end
-      code =<<-method
-        def self.cached_#{to}(id)
-          all_#{to}s[id].to_s
-        end
-      method
-      class_eval(code)
-
-      # generate this
-      #
-      # def to_slug
-      #  if respond_to?(:path_ids)
-      #    slugs = if true
-      #      path_ids.map{|id| self.class.cached_slug(id)}.compact.select{|i| i.size > 0 }
-      #    else
-      #      path.map{|record| record.send(:"slug")}.compact.select{|i| i.size > 0 }
-      #    end
-      #    slugs.empty? ? "" : slugs
-      #  else
-      #    send(:slug)
-      #  end
-      # end
-      code =<<-method
-        def to_#{to}
-          if respond_to?(:path_ids)
-            slugs = if #{cache_tree}
-              path_ids.map{|id| self.class.cached_#{to}(id)}.compact.select{|i| i.size > 0 }
-            else
-              path.map{|record| record.send(:"#{to}")}.compact.select{|i| i.size > 0 }
-            end
-            slugs.empty? ? "" : slugs
-          else
-            send(:#{to})
+          define_method :"fill_slug_from_#{from}_to_#{to}" do
+            public_send(:"#{to}=", public_send(from)) if public_send(to).blank? || public_send(to).parameterize.blank?
           end
-        end
-      method
-      class_eval(code)
 
-
-      # generate this
-      #
-      # def to_slug_was
-      #  if respond_to?(:ancestry_was)
-      #    old_slugs = if true
-      #      ancestry_was.to_s.split("/").map { |ancestor_id| self.class.cached_slug(ancestor_id.to_i) }
-      #    else
-      #      ancestry_was.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).send(:slug) }
-      #    end
-      #    old_slugs << send(:slug_was)
-      #  else
-      #    send(:slug_was)
-      #  end
-      # end
-      code =<<-method
-        def to_#{to}_was
-          if respond_to?(:ancestry_was)
-            old_slugs = if #{cache_tree}
-              ancestry_was.to_s.split("/").map { |ancestor_id| self.class.cached_#{to}(ancestor_id.to_i) }
-            else
-              ancestry_was.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).send(:#{to}) }
-            end
-            old_slugs << send(:#{to}_was)
-          else
-            send(:#{to}_was)
+          define_method :"format_slug_from_#{from}_to_#{to}" do
+            public_send(:"#{to}=", public_send(to).public_send(:"#{formatter}"))
           end
-        end
-      method
-      class_eval(code)
 
-      # generate this
-      #
-      # def to_slug_will
-      #  if respond_to?(:ancestry)
-      #    old_slugs = if true
-      #      ancestry.to_s.split("/").map { |ancestor_id| self.class.cached_slug(ancestor_id.to_i) }
-      #    else
-      #      ancestry.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).send(:slug) }
-      #    end
-      #    old_slugs << send(:slug)
-      #  else
-      #    send(:slug_was)
-      #  end
-      # end
-      code =<<-method
-          def to_#{to}_will
+          define_method :"to_#{to}" do
+            if respond_to?(:path_ids)
+              slugs = if cache_tree
+                        path_ids.map{ |id| self.class.public_send(:"cached_#{to}", id) }.compact.select{|i| i.size > 0 }
+                      else
+                        path.map{ |record| record.public_send(:"#{to}")}.compact.select{|i| i.size > 0 }
+                      end
+              slugs.empty? ? "" : slugs
+            else
+              public_send(to)
+            end
+          end
+
+          define_method :"to_#{to}_was" do
+            if respond_to?(:ancestry_was)
+              old_slugs = if cache_tree
+                            ancestry_was.to_s.split("/").map { |ancestor_id| self.class.public_send(:"cached_#{to}", ancestor_id.to_i) }
+                          else
+                            ancestry_was.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).public_send(to) }
+                          end
+              old_slugs << public_send(:"#{to}_was")
+            else
+              public_send(:"#{to}_was")
+            end
+          end
+
+          define_method :"to_#{to}_will" do
             if respond_to?(:ancestry)
-              new_slugs = if #{cache_tree}
-                ancestry.to_s.split("/").map { |ancestor_id| self.class.cached_#{to}(ancestor_id.to_i) }
-              else
-                ancestry.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).send(:#{to}) }
-              end
-              new_slugs << send(:#{to}).send(:#{formatter})
+              new_slugs = if cache_tree
+                            ancestry.to_s.split("/").map { |ancestor_id| self.class.public_send(:"cached_#{to}", ancestor_id.to_i) }
+                          else
+                            ancestry.to_s.split("/").map { |ancestor_id| self.class.find(ancestor_id).public_send(to) }
+                          end
+              new_slugs << public_send(to).public_send(formatter)
             else
-              send(:#{to}).send(:#{formatter})
+              public_send(to).public_send(formatter)
             end
           end
-      method
-      class_eval(code)
+
+          define_method :"update_my_#{to}_cache" do
+            self.class.class_variable_set(:@@all, self.class.class_variable_get(:@@all) || {})
+            self.class.class_variable_get(:@@all)[id] = public_send(to)
+          end
+
+          define_singleton_method :"all_#{to}s" do
+            class_variable_set(
+                :"@@all",
+                class_variable_get(:"@@all") ||
+                    all.map_to_hash{ |slug_element| { slug_element.id => slug_element.public_send(to) } }
+            )
+          end
+
+          define_singleton_method :"clear_cached_#{to}s" do
+            class_variable_set(:"@@all", nil)
+          end
+
+          define_singleton_method :"cached_#{to}" do |id|
+            public_send(:"all_#{to}s")[id].to_s
+          end
+        end
+      end
     end
   end
 end
