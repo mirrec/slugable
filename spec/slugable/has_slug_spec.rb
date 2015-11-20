@@ -1,5 +1,4 @@
 require "spec_helper"
-require 'pry'
 
 ActiveRecord::Base.send :extend, Slugable::HasSlug
 
