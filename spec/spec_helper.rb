@@ -1,10 +1,10 @@
-require "slugable"
-require "sqlite3"
-require "ancestry"
+require 'slugable'
+require 'sqlite3'
+require 'ancestry'
 
-ActiveRecord::Base.establish_connection :adapter => "sqlite3", :database => ":memory:"
+ActiveRecord::Base.establish_connection :adapter => 'sqlite3', :database => ':memory:'
 
-load "db/schema.rb"
+load 'db/schema.rb'
 
 RSpec.configure do |config|
   config.filter_run :focus => true

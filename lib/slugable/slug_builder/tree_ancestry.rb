@@ -10,16 +10,16 @@ module Slugable
 
       def to_slug(record)
         slugs = record.path.map{ |record| record.public_send(slug_column) }.compact.select{ |i| i.size > 0 }
-        slugs.empty? ? "" : slugs
+        slugs.empty? ? '' : slugs
       end
 
       def to_slug_was(record)
-        old_slugs = record.ancestry_was.to_s.split("/").map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
+        old_slugs = record.ancestry_was.to_s.split('/').map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
         old_slugs << record.public_send(:"#{slug_column}_was")
       end
 
       def to_slug_will(record)
-        new_slugs = record.ancestry.to_s.split("/").map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
+        new_slugs = record.ancestry.to_s.split('/').map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
         new_slugs << formatter.call(record.public_send(slug_column))
         new_slugs
       end

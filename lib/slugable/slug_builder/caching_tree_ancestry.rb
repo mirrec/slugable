@@ -10,7 +10,7 @@ module Slugable
 
       def to_slug(record)
         slugs = record.path_ids.map{ |id| cache.read(slug_column, id) }.compact.select{|i| i.size > 0 }
-        slugs.empty? ? "" : slugs
+        slugs.empty? ? '' : slugs
       end
     end
   end
