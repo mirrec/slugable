@@ -1,23 +1,22 @@
 module Slugable
   module SlugBuilder
     class Flat
-      attr_reader :record, :slug_column, :formatter
+      attr_reader :slug_column, :formatter
 
-      def initialize(record, slug_column, options)
-        @record = record
-        @slug_column = slug_column
+      def initialize(options)
+        @slug_column = options.fetch(:slug_column)
         @formatter = options.fetch(:formatter)
       end
 
-      def to_slug
+      def to_slug(record)
         record.public_send(slug_column)
       end
 
-      def to_slug_was
+      def to_slug_was(record)
         record.public_send(:"#{slug_column}_was")
       end
 
-      def to_slug_will
+      def to_slug_will(record)
         formatter.call(record.public_send(slug_column))
       end
     end

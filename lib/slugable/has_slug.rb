@@ -48,6 +48,16 @@ module Slugable
           cache_layer = Slugable::CacheLayer.new(tree_cache_storage, self.class)
         end
 
+        builder = if model.respond_to?(:ancestry_column)
+                    if cache_layer
+                      Slugable::SlugBuilder::CachingTreeAncestry.new(:slug_column => to, :formatter => formatter, :cache => cache_layer)
+                    else
+                      Slugable::SlugBuilder::TreeAncestry.new(:slug_column => to, :formatter => formatter)
+                    end
+                  else
+                    Slugable::SlugBuilder::Flat.new(:slug_column => to, :formatter => formatter)
+                  end
+
         model.class_eval do
           before_save :"prepare_slug_in_#{to}"
           if cache_layer
@@ -55,15 +65,7 @@ module Slugable
           end
 
           define_method :"slug_builder_for_#{to}" do
-            if respond_to?(:path_ids)
-              if cache_layer
-                Slugable::SlugBuilder::CachingTreeAncestry.new(self, to, :formatter => formatter, :cache => cache_layer)
-              else
-                Slugable::SlugBuilder::TreeAncestry.new(self, to, :formatter => formatter)
-              end
-            else
-              Slugable::SlugBuilder::Flat.new(self, to, :formatter => formatter)
-            end
+            builder
           end
 
           define_method :"prepare_slug_in_#{to}" do
@@ -74,15 +76,15 @@ module Slugable
           end
 
           define_method :"to_#{to}" do
-            public_send(:"slug_builder_for_#{to}").to_slug
+            public_send(:"slug_builder_for_#{to}").to_slug(self)
           end
 
           define_method :"to_#{to}_was" do
-            public_send(:"slug_builder_for_#{to}").to_slug_was
+            public_send(:"slug_builder_for_#{to}").to_slug_was(self)
           end
 
           define_method :"to_#{to}_will" do
-            public_send(:"slug_builder_for_#{to}").to_slug_will
+            public_send(:"slug_builder_for_#{to}").to_slug_will(self)
           end
 
           if cache_layer
