@@ -2,6 +2,36 @@ require "spec_helper"
 
 ActiveRecord::Base.send :extend, Slugable::HasSlug
 
+class HashCacheStorage
+  attr_reader :store
+
+  def initialize
+    @store = {}
+  end
+
+  def fetch(key, options = nil, &block)
+    store.fetch(key) {
+      value = block.call
+      store[key] = value
+      value
+    }
+  end
+
+  def clear(options = nil)
+    @store = {}
+  end
+
+  def read(key, options = nil)
+    store[key]
+  end
+
+  def write(key, value, options = nil)
+    store[key] = value
+  end
+end
+
+hash_cache_storage = HashCacheStorage.new
+
 class Item < ActiveRecord::Base
   has_slug
 end
@@ -17,8 +47,8 @@ end
 
 class TreeItem < ActiveRecord::Base
   has_ancestry
-  has_slug :cache_tree => false
 end
+TreeItem.send(:has_slug, :cache_store => hash_cache_storage)
 
 class Product < ActiveRecord::Base
   has_slug :formatter => lambda { |string| "hello-all-the-time" }
@@ -26,7 +56,7 @@ end
 
 describe Slugable::HasSlug do
   before(:each) do
-    Category.clear_cached_slugs
+    hash_cache_storage.clear
   end
 
   context "default options" do
@@ -77,18 +107,6 @@ describe Slugable::HasSlug do
       product = Product.create!(:name => "my name is", :slug => "product")
       product.slug.should eq "hello-all-the-time"
     end
-
-    it "should be able to disable tree caching" do
-      tree_item = TreeItem.create!(:name => "my name is", :parent => TreeItem.create!(:name => "root"))
-      tree_item.should_receive(:path).and_return([])
-      tree_item.to_slug
-      tree_item.should_receive(:path).and_return([])
-      tree_item.to_slug
-
-      tree_item = Category.create!(:name => "my name is", :parent => Category.create!(:name => "root"))
-      tree_item.should_not_receive(:path)
-      tree_item.to_slug
-    end
   end
 
   describe "to_slug" do
@@ -131,7 +149,7 @@ describe Slugable::HasSlug do
         child.save!
 
         Category.update_all({:slug => nil}, {:id => root.id})
-        Category.clear_cached_slugs
+        hash_cache_storage.clear
 
         child.to_slug.should eq ["child"]
       end
@@ -210,49 +228,6 @@ describe Slugable::HasSlug do
         child.parent = root
         child.slug = "move d"
         child.to_slug_will.should eq ["root", "move-d"]
-      end
-    end
-  end
-
-  describe "ancestry methods" do
-    describe "all_slugs" do
-      it "ancestry model class should respond to all_slugs" do
-        Category.should respond_to :all_slugs
-      end
-
-      it "should return all slugs in hash where key is id and value is slug by itself" do
-        root = Category.create!(:name => "root", :slug => "root")
-        child = Category.new(:name => "child", :slug => "child")
-        child.parent = root
-        child.save!
-
-        Category.all_slugs.should eq({root.id => "root", child.id => "child"})
-      end
-
-      it "should update slug cache after save" do
-        root = Category.create!(:name => "root", :slug => "root")
-        Category.all_slugs.should eq({root.id => "root"})
-
-        child = Category.new(:name => "child", :slug => "child")
-        child.save! # force save
-        Category.all_slugs.should eq({root.id => "root", child.id => "child"})
-
-        child.slug = "updated-child"
-        child.save # standard save
-        Category.all_slugs.should eq({root.id => "root", child.id => "updated-child"})
-      end
-    end
-
-    describe "clear_cached_slugs" do
-      it "should clear cache for slug" do
-        root = Category.create!(:name => "root", :slug => "root")
-        Category.all_slugs.should eq({root.id => "root"})
-
-        root.destroy
-        Category.all_slugs.should eq({root.id => "root"})
-
-        Category.clear_cached_slugs
-        Category.all_slugs.should eq({})
       end
     end
   end

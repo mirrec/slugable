@@ -12,7 +12,7 @@ module Slugable
     # has_slug :to => :seo_url                # generate to_url
     # has_slug :from => :name, :to => :slug   # generate to_slug
     #
-    def has_slug(options={})
+    def has_slug(options = {})
       MethodBuilder.build(self, options)
     end
 
@@ -65,7 +65,7 @@ module Slugable
     end
 
     class CachingAncestrySlugBuilder < AncestrySlugBuilder
-      attr_reader :record, :slug_column, :formatter, :cache
+      attr_reader :cache
 
       def initialize(record, slug_column, options)
         super
@@ -73,34 +73,58 @@ module Slugable
       end
 
       def to_slug
-        slugs = record.path_ids.map{ |id| cache.public_send(:"cached_#{slug_column}", id) }.compact.select{|i| i.size > 0 }
+        slugs = record.path_ids.map{ |id| cache.read(slug_column, id) }.compact.select{|i| i.size > 0 }
         slugs.empty? ? "" : slugs
+      end
+    end
+
+    class CacheLayer
+      attr_reader :storage, :model
+
+      def initialize(storage, model)
+        @storage = storage
+        @model = model
+      end
+
+      def read(slug_column, id)
+        storage.fetch(cache_key(slug_column, id)) { model.find(id).public_send(slug_column) }
+      end
+
+      def update(slug_column, id, value)
+        storage.write(cache_key(slug_column, id), value)
+      end
+
+      private
+
+      def cache_key(slug_column, id)
+        "#{model.to_s.underscore}/#{slug_column}/#{id}"
       end
     end
 
     class MethodBuilder
       def self.build(model, options)
-        # constructing slug
-        # building to_slug, to_slug_was, to_slug_will
-        # caching slug
+        defaults = {:from => :name, :to => :slug, :formatter => ParameterizeFormatter, :cache_storage => nil}
 
-        defaults = {:from => :name, :to => :slug, :formatter => ParameterizeFormatter, :cache_tree => true}
         options.reverse_merge!(defaults)
         from = options.delete(:from)
         to = options.delete(:to)
         formatter = options.delete(:formatter)
-        cache_tree = options.delete(:cache_tree)
+        cache_storage = options.delete(:cache_storage)
+        cache_layer = nil
+        if cache_storage
+          cache_layer = CacheLayer.new(cache_storage, self.class)
+        end
 
         model.class_eval do
-          class_variable_set(:@@all, nil)
-
           before_save :"prepare_slug_in_#{to}"
-          after_save :"update_my_#{to}_cache"
+          if cache_layer
+            after_save :"update_my_#{to}_cache"
+          end
 
           define_method :"slug_builder_for_#{to}" do
             if respond_to?(:path_ids)
-              if cache_tree
-                Slugable::HasSlug::CachingAncestrySlugBuilder.new(self, to, :formatter => formatter, :cache => self.class)
+              if cache_layer
+                Slugable::HasSlug::CachingAncestrySlugBuilder.new(self, to, :formatter => formatter, :cache => cache_layer)
               else
                 Slugable::HasSlug::AncestrySlugBuilder.new(self, to, :formatter => formatter)
               end
@@ -128,25 +152,10 @@ module Slugable
             public_send(:"slug_builder_for_#{to}").to_slug_will
           end
 
-          define_method :"update_my_#{to}_cache" do
-            self.class.class_variable_set(:@@all, self.class.class_variable_get(:@@all) || {})
-            self.class.class_variable_get(:@@all)[id] = public_send(to)
-          end
-
-          define_singleton_method :"all_#{to}s" do
-            class_variable_set(
-                :"@@all",
-                class_variable_get(:"@@all") ||
-                    all.map_to_hash{ |slug_element| { slug_element.id => slug_element.public_send(to) } }
-            )
-          end
-
-          define_singleton_method :"clear_cached_#{to}s" do
-            class_variable_set(:"@@all", nil)
-          end
-
-          define_singleton_method :"cached_#{to}" do |id|
-            public_send(:"all_#{to}s")[id].to_s
+          if cache_layer
+            define_method :"update_my_#{to}_cache" do
+              cache_layer.update(to, id, public_send(to))
+            end
           end
         end
       end
