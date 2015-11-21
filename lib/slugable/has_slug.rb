@@ -38,34 +38,6 @@ module Slugable
       end
     end
 
-    class CachingAncestrySlugBuilder
-      attr_reader :record, :slug_column, :formatter, :cache
-
-      def initialize(record, slug_column, options)
-        @record = record
-        @slug_column = slug_column
-        @formatter = options.fetch(:formatter)
-        @cache = options.fetch(:cache)
-      end
-
-      def to_slug
-        slugs = record.path_ids.map{ |id| cache.public_send(:"cached_#{slug_column}", id) }.compact.select{|i| i.size > 0 }
-        slugs.empty? ? "" : slugs
-      end
-
-      def to_slug_was
-        old_slugs = record.ancestry_was.to_s.split("/").map { |ancestor_id| cache.public_send(:"cached_#{slug_column}", ancestor_id.to_i) }
-        old_slugs << record.public_send(:"#{slug_column}_was")
-        old_slugs
-      end
-
-      def to_slug_will
-        new_slugs = record.ancestry.to_s.split("/").map { |ancestor_id| cache.public_send(:"cached_#{slug_column}", ancestor_id.to_i) }
-        new_slugs << formatter.call(record.public_send(slug_column))
-        new_slugs
-      end
-    end
-
     class AncestrySlugBuilder
       attr_reader :record, :slug_column, :formatter
 
@@ -86,7 +58,23 @@ module Slugable
       end
 
       def to_slug_will
-        record.ancestry.to_s.split("/").map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
+        new_slugs = record.ancestry.to_s.split("/").map { |ancestor_id| record.class.find(ancestor_id).public_send(slug_column) }
+        new_slugs << formatter.call(record.public_send(slug_column))
+        new_slugs
+      end
+    end
+
+    class CachingAncestrySlugBuilder < AncestrySlugBuilder
+      attr_reader :record, :slug_column, :formatter, :cache
+
+      def initialize(record, slug_column, options)
+        super
+        @cache = options.fetch(:cache)
+      end
+
+      def to_slug
+        slugs = record.path_ids.map{ |id| cache.public_send(:"cached_#{slug_column}", id) }.compact.select{|i| i.size > 0 }
+        slugs.empty? ? "" : slugs
       end
     end
 
