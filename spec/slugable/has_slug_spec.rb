@@ -8,15 +8,15 @@ Slugable.configure do |config|
   config.tree_cache_storage = hash_cache_storage
 end
 
-class Item < ActiveRecord::Base
+class FlatItem < ActiveRecord::Base
   has_slug
 end
 
-class Page < ActiveRecord::Base
+class FlatPage < ActiveRecord::Base
   has_slug :from => :title, :to => :seo_url
 end
 
-class Category < ActiveRecord::Base
+class TreeCategory < ActiveRecord::Base
   has_ancestry
   has_slug :tree_cache_storage => nil
 end
@@ -26,7 +26,7 @@ class TreeItem < ActiveRecord::Base
   has_slug :tree_cache_storage => Slugable.configuration.tree_cache_storage
 end
 
-class Product < ActiveRecord::Base
+class FlatProduct < ActiveRecord::Base
   has_slug :formatter => lambda { |string| 'hello-all-the-time' }
 end
 
@@ -36,95 +36,84 @@ describe Slugable::HasSlug do
   end
 
   context 'default options' do
-    it 'should create fill_slug_from_name_to_slug' do
-      Item.new.should respond_to :prepare_slug_in_slug
+    it 'creates fill_slug_from_name_to_slug' do
+      FlatItem.new.should respond_to :prepare_slug_in_slug
     end
 
-    it 'should fill in slug parameter from attribute name and parametrize it' do
+    it 'fills in slug parameter from attribute apply a parameterize format to it' do
       name = 'my name is'
-      name.should_receive(:parameterize).and_return('my-name-is')
 
-      item = Item.create!(:name => name)
+      item = FlatItem.create!(:name => name)
       item.slug.should eq 'my-name-is'
     end
 
-    it 'should fill in slug from attribute name if parameterize version of slug is blank' do
-      item = Item.create!(:name => 'my name is', :slug => '/')
+    it 'fills in slug from attribute name if parameterize version of slug is blank' do
+      item = FlatItem.create!(:name => 'my name is', :slug => '')
       item.slug.should eq 'my-name-is'
     end
 
-    it 'should only parametrize slug attribute if slug is present' do
-      item = Item.create!(:name => 'my name is', :slug => 'my url')
+    it 'does not change slug attribute if slug is present' do
+      item = FlatItem.create!(:name => 'my name is', :slug => 'my url')
       item.slug.should eq 'my-url'
     end
   end
 
   context 'given options' do
-    it 'should create fill_slug_from_title_to_seo_url' do
-      Page.new.should respond_to :prepare_slug_in_seo_url
+    it 'creates fill_slug_from_title_to_seo_url' do
+      FlatPage.new.should respond_to :prepare_slug_in_seo_url
     end
 
-    it 'should fill in slug parameter from attribute title and parametrize it' do
-      page = Page.create!(:title => 'my name is')
+    it 'fills in slug parameter from attribute title and parametrize it' do
+      page = FlatPage.create!(:title => 'my name is')
       page.seo_url.should eq 'my-name-is'
     end
 
-    it 'should fill in slug parameter from attribute title if parameterize version of slug is blank' do
-      page = Page.create!(:title => 'my name is', :seo_url => '/')
-      page.seo_url.should eq 'my-name-is'
-    end
-
-    it 'should only parametrize slug attribute if slug is present' do
-      page = Page.create!(:title => 'my name is', :seo_url => 'my url')
-      page.seo_url.should eq 'my-url'
-    end
-
-    it 'should be able to change parameterize method' do
-      product = Product.create!(:name => 'my name is', :slug => 'product')
+    it 'fills in slug parameter and use custom formatter' do
+      product = FlatProduct.create!(:name => 'my name is', :slug => 'product')
       product.slug.should eq 'hello-all-the-time'
     end
   end
 
-  describe 'to_slug' do
+  describe '#to_slug' do
     context 'default options' do
-      it 'should define method to_seo_url' do
-        Item.new.should respond_to :to_slug
+      it 'defines to_slug method' do
+        FlatItem.new.should respond_to :to_slug
       end
 
-      it 'should return slug in string' do
-        item = Item.create!(:name => 'my name is', :slug => 'my-url')
+      it 'returns slug in string' do
+        item = FlatItem.create!(:name => 'my name is', :slug => 'my-url')
         item.to_slug.should eq 'my-url'
       end
     end
 
     context 'given options' do
-      it 'should define method to_seo_url' do
-        Page.new.should respond_to :to_seo_url
+      it 'defines method to_seo_url' do
+        FlatPage.new.should respond_to :to_seo_url
       end
 
-      it 'should return slug in string' do
-        page = Page.create!(:title => 'my name is', :seo_url => 'my-url')
+      it 'returns slug in string' do
+        page = FlatPage.create!(:title => 'my name is', :seo_url => 'my-url')
         page.to_seo_url.should eq 'my-url'
       end
     end
 
     context 'ancestry model' do
-      it 'should return array of slugs' do
-        root = Category.create!(:name => 'root', :slug => 'root')
-        child = Category.new(:name => 'child', :slug => 'child')
+      it 'returns array of slugs' do
+        root = TreeCategory.create!(:name => 'root', :slug => 'root')
+        child = TreeCategory.new(:name => 'child', :slug => 'child')
         child.parent = root
         child.save!
 
         child.to_slug.should eq ['root', 'child']
       end
 
-      it 'should skip nil values from slug path' do
-        root = Category.create!(:name => 'root', :slug => 'root')
-        child = Category.new(:name => 'child', :slug => 'child')
+      it 'skips nil values from slug path' do
+        root = TreeCategory.create!(:name => 'root', :slug => 'root')
+        child = TreeCategory.new(:name => 'child', :slug => 'child')
         child.parent = root
         child.save!
 
-        Category.update_all({:slug => nil}, {:id => root.id})
+        TreeCategory.update_all({:slug => nil}, {:id => root.id})
         hash_cache_storage.clear
 
         child.to_slug.should eq ['child']
@@ -132,35 +121,35 @@ describe Slugable::HasSlug do
     end
   end
 
-  describe 'to_slug_was' do
+  describe '#to_slug_was' do
     context 'default options' do
-      it 'should define method to_slug_was' do
-        Item.new.should respond_to :to_slug_was
+      it 'defines method to_slug_was' do
+        FlatItem.new.should respond_to :to_slug_was
       end
 
-      it 'should return old slug in string' do
-        item = Item.create!(:name => 'my name is', :slug => 'my-url')
+      it 'returns old slug in string' do
+        item = FlatItem.create!(:name => 'my name is', :slug => 'my-url')
         item.slug = 'new-slug'
         item.to_slug_was.should eq 'my-url'
       end
     end
 
     context 'given options' do
-      it 'should define method to_seo_url_was' do
-        Page.new.should respond_to :to_seo_url_was
+      it 'defines method to_seo_url_was' do
+        FlatPage.new.should respond_to :to_seo_url_was
       end
 
-      it 'should return future slug in string' do
-        page = Page.create!(:title => 'my name is', :seo_url => 'my-url')
+      it 'returns future slug in string' do
+        page = FlatPage.create!(:title => 'my name is', :seo_url => 'my-url')
         page.seo_url = 'hello-world'
         page.to_seo_url_was.should eq 'my-url'
       end
     end
 
     context 'ancestry model' do
-      it 'should return array of old slugs' do
-        root = Category.create!(:name => 'root', :slug => 'root')
-        child = Category.new(:name => 'child', :slug => 'child')
+      it 'returns array of old slugs' do
+        root = TreeCategory.create!(:name => 'root', :slug => 'root')
+        child = TreeCategory.new(:name => 'child', :slug => 'child')
         child.save!
 
         child.parent = root
@@ -170,35 +159,35 @@ describe Slugable::HasSlug do
     end
   end
 
-  describe 'to_slug_will' do
+  describe '#to_slug_will' do
     context 'default options' do
-      it 'should define method to_slug_will' do
-        Item.new.should respond_to :to_slug_will
+      it 'defines method to_slug_will' do
+        FlatItem.new.should respond_to :to_slug_will
       end
 
-      it 'should return future slug in string' do
-        item = Item.create!(:name => 'my name is', :slug => 'my-url')
+      it 'returns future slug in string' do
+        item = FlatItem.create!(:name => 'my name is', :slug => 'my-url')
         item.slug = 'new slug'
         item.to_slug_will.should eq 'new-slug'
       end
     end
 
     context 'given options' do
-      it 'should define method to_seo_url_will' do
-        Page.new.should respond_to :to_seo_url_will
+      it 'defines method to_seo_url_will' do
+        FlatPage.new.should respond_to :to_seo_url_will
       end
 
-      it 'should return slug in string' do
-        page = Page.create!(:title => 'my name is', :seo_url => 'my-url')
+      it 'returns slug in string' do
+        page = FlatPage.create!(:title => 'my name is', :seo_url => 'my-url')
         page.seo_url = 'hello world'
         page.to_seo_url_will.should eq 'hello-world'
       end
     end
 
     context 'ancestry model' do
-      it 'should return array of slugs' do
-        root = Category.create!(:name => 'root', :slug => 'root')
-        child = Category.new(:name => 'child', :slug => 'child')
+      it 'returns array of slugs' do
+        root = TreeCategory.create!(:name => 'root', :slug => 'root')
+        child = TreeCategory.new(:name => 'child', :slug => 'child')
         child.save!
 
         child.parent = root
