@@ -1,4 +1,17 @@
 module Slugable
+  Configuration = Struct.new(:formatter, :tree_cache_storage)
+
+  def self.configuration
+    @configuration ||= Configuration.new(
+        Slugable::Formatter::Parameterize,
+        nil
+    )
+  end
+
+  def self.configure
+    yield configuration
+  end
+
   module HasSlug
     #
     # USAGE
@@ -18,16 +31,21 @@ module Slugable
 
     class MethodBuilder
       def self.build(model, options)
-        defaults = {:from => :name, :to => :slug, :formatter => Slugable::Formatter::Parameterize, :cache_storage => nil}
+        defaults = {
+            :from => :name,
+            :to => :slug,
+            :formatter => Slugable.configuration.formatter,
+            :tree_cache_storage => Slugable.configuration.tree_cache_storage
+        }
 
         options.reverse_merge!(defaults)
         from = options.delete(:from)
         to = options.delete(:to)
         formatter = options.delete(:formatter)
-        cache_storage = options.delete(:cache_storage)
+        tree_cache_storage = options.delete(:tree_cache_storage)
         cache_layer = nil
-        if cache_storage
-          cache_layer = Slugable::CacheLayer.new(cache_storage, self.class)
+        if tree_cache_storage
+          cache_layer = Slugable::CacheLayer.new(tree_cache_storage, self.class)
         end
 
         model.class_eval do

@@ -4,6 +4,10 @@ ActiveRecord::Base.send :extend, Slugable::HasSlug
 
 hash_cache_storage = HashCacheStorage.new
 
+Slugable.configure do |config|
+  config.tree_cache_storage = hash_cache_storage
+end
+
 class Item < ActiveRecord::Base
   has_slug
 end
@@ -14,13 +18,13 @@ end
 
 class Category < ActiveRecord::Base
   has_ancestry
-  has_slug
+  has_slug :tree_cache_storage => nil
 end
 
 class TreeItem < ActiveRecord::Base
   has_ancestry
+  has_slug :tree_cache_storage => Slugable.configuration.tree_cache_storage
 end
-TreeItem.send(:has_slug, :cache_store => hash_cache_storage)
 
 class Product < ActiveRecord::Base
   has_slug :formatter => lambda { |string| "hello-all-the-time" }
