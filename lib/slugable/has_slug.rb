@@ -30,33 +30,52 @@ module Slugable
     end
 
     class MethodBuilder
-      def self.build(model, options)
-        defaults = {
-            :from => :name,
-            :to => :slug,
-            :formatter => Slugable.configuration.formatter,
-            :tree_cache_storage => Slugable.configuration.tree_cache_storage
+      def self.default_options
+        {
+            :from               => :name,
+            :to                 => :slug,
+            :formatter          => Slugable.configuration.formatter,
+            :tree_cache_storage => Slugable.configuration.tree_cache_storage,
+            :to_slug_builder    => nil,
         }
+      end
 
-        options.reverse_merge!(defaults)
-        from = options.delete(:from)
-        to = options.delete(:to)
-        formatter = options.delete(:formatter)
-        tree_cache_storage = options.delete(:tree_cache_storage)
-        cache_layer = nil
+      def self.build(model, options)
+        options             = options.reverse_merge(default_options)
+
+        from                = options.delete(:from)
+        to                  = options.delete(:to)
+        formatter           = options.delete(:formatter)
+        tree_cache_storage  = options.delete(:tree_cache_storage)
+        to_slug_builder     = options.delete(:to_slug_builder)
+
+        cache_layer         = nil
         if tree_cache_storage
-          cache_layer = Slugable::CacheLayer.new(tree_cache_storage, self.class)
+          cache_layer = Slugable::CacheLayer.new(tree_cache_storage, model)
+          builder_options = {
+              :slug_column => to,
+              :formatter => formatter,
+              :cache => cache_layer
+          }
+        else
+          builder_options = {
+              :slug_column => to,
+              :formatter => formatter,
+          }
         end
 
-        builder = if model.respond_to?(:ancestry_column)
-                    if cache_layer
-                      Slugable::SlugBuilder::CachingTreeAncestry.new(:slug_column => to, :formatter => formatter, :cache => cache_layer)
-                    else
-                      Slugable::SlugBuilder::TreeAncestry.new(:slug_column => to, :formatter => formatter)
-                    end
-                  else
-                    Slugable::SlugBuilder::Flat.new(:slug_column => to, :formatter => formatter)
-                  end
+        if to_slug_builder.nil?
+          builder = Slugable::SlugBuilder::Flat
+
+          if model.respond_to?(:ancestry_column)
+            if cache_layer
+              builder = Slugable::SlugBuilder::CachingTreeAncestry
+            else
+              builder = Slugable::SlugBuilder::TreeAncestry
+            end
+          end
+          to_slug_builder = builder.new(builder_options)
+        end
 
         model.class_eval do
           before_save :"prepare_slug_in_#{to}"
@@ -65,7 +84,7 @@ module Slugable
           end
 
           define_method :"slug_builder_for_#{to}" do
-            builder
+            to_slug_builder
           end
 
           define_method :"prepare_slug_in_#{to}" do
