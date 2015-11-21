@@ -1,10 +1,14 @@
 module Slugable
-  Configuration = Struct.new(:formatter, :tree_cache_storage)
+  Configuration = Struct.new(:formatter, :tree_cache_storage) do
+    def initialize(params)
+      params.each { |key, value| public_send(:"#{key}=", value) }
+    end
+  end
 
   def self.configuration
     @configuration ||= Configuration.new(
-        Slugable::Formatter::Parameterize,
-        nil
+        :formatter          => Slugable::Formatter::Parameterize,
+        :tree_cache_storage => nil
     )
   end
 
