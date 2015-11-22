@@ -5,10 +5,26 @@
 [![Code Climate](https://codeclimate.com/github/mirrec/slugable/badges/gpa.svg)](https://codeclimate.com/github/mirrec/slugable)
 [![Test Coverage](https://codeclimate.com/github/mirrec/slugable/badges/coverage.svg)](https://codeclimate.com/github/mirrec/slugable/coverage)
 
-* adds support for seo friendly url
-* one helper method has_slug
-* support for ancestry models 'https://github.com/stefankroes/ancestry'
-* be default cache ancestry models url, can be changed
+* adds support for creating seo friendly url to your active record models and simplifies generating url
+
+```ruby
+# model
+class Article < ActiveRecord::Base
+  # has columns: id, name, slug
+  has_slug
+end
+
+# creating new
+item = Article.create!(name: 'First article')
+item.slug # => 'first-article'
+item.to_slug # => 'first-article'
+
+# routes to the article
+get "articles/:slug" => "articles#show", as: :article
+
+# view
+link_to 'My first article', article_path(item.to_slug) # => '/articles/first-article'
+```
 
 ## Installation
 
@@ -28,13 +44,13 @@ Or install it yourself as:
 
 ## Usage
 
-in model use method has_slug
+* default configuration converts name column to slug column
 
 ```ruby
 class Item < ActiveRecord::Base
-  attr_accessor :name, :slug
+  # columns :name, :slug
 
-  has_slug # default from: :name, to: :slug, formatter: :parameterize, cache_tree: true
+  has_slug # default from: :name, to: :slug
 end
 
 # then in code
@@ -54,28 +70,23 @@ you can override defaults by passing hash
 
 ```ruby
 class Page < ActiveRecord::Base
-  attr_accessor :title, :seo_url
+  # has columns: :id, :title, :seo_url
 
-  has_slug from: :title, to: :seo_url, formatter: :my_style
-end
-
-class String
-  def my_style
-    self.parameterize
-  end
+  has_slug from: :title, to: :seo_url, formatter: lambda { |string| string.downcase }
 end
 
 # then in code
-page = Page.create!(title: "my name is", seo_url: "my url")
-page.seo_url # => "my-url"
-page.to_seo_url # => "my-url"
+page = Page.create!(title: "NAME")
+page.seo_url # => "name"
+page.to_seo_url # => "name"
 ```
 
-if you have model with ancestry gem 'https://github.com/stefankroes/ancestry'
+if model is a tree structure and you use [ancestry gem](https://github.com/stefankroes/ancestry),
+tree like structure will be generated
 
 ```ruby
 class Category < ActiveRecord::Base
-  attr_accessor :name, :slug
+  # has columns: :id, :name, :slug
 
   has_ancestry
   has_slug
@@ -105,18 +116,64 @@ child.save!
 child.to_slug # => ["branch", "renamed"]
 ```
 
-## configuration
-
-  By default all ancestry structure are cached to prevent useless calls to fetch same record from database just for slug values.
-  You can pass :cache_tree option to disable it like this.
+* You can cache slug for tree structure if you want to optimize performance, all you need is to pass cache storage object
 
 ```ruby
 class Category < ActiveRecord::Base
-  attr_accessor :name, :slug
+  # has columns: :id, :name, :slug
 
   has_ancestry
-  has_slug cache_tree: false
+  has_slug tree_cache_storage: Rails.cache
 end
+```
+
+## Configuration
+
+You can set up default formatter and default tree_cache_storage in you initializer.
+
+```ruby
+class MyFormatter
+  def format(string)
+    string.my_own_parameterize
+  end
+end
+
+Slugable.configure do |config|
+  config.formatter          = MyFormatter
+  config.tree_cache_storage = Rails.cache
+end
+```
+
+`to_slug`, `to_slug_was` and `to_slug_will` methods are implemented by to_slug_builder. You can implement you own one and pass as configuration
+
+```ruby
+# you own to slug builder
+class SimpleToSlug
+  def to_slug(record)
+    "to_slug_#{record.id}"
+  end
+
+  def to_slug_was(record)
+    "to_slug_was_#{record.id}"
+  end
+
+  def to_slug_will(record)
+    "to_slug_will_#{record.id}"
+  end
+end
+
+# model
+class News < ActiveRecord::Base
+  # columns: :id, :name, :slug
+
+  has_slug to_slug_builder: SimpleToSlug.new
+end
+
+# code
+news = News.create!(name: 'whatever')
+news.to_slug.should eq "to_slug_#{news.id}"
+news.to_slug_was.should eq "to_slug_was_#{news.id}"
+news.to_slug_will.should eq "to_slug_will_#{news.id}"
 ```
 
 ## Contributing
