@@ -1,4 +1,3 @@
-puts ENV.inspect
 if ENV['COVERAGE'] == '1'
   require 'simplecov'
   SimpleCov.start do
@@ -7,8 +6,7 @@ if ENV['COVERAGE'] == '1'
   end
 end
 
-if ENV['CI']
-  puts 'reports to code climate'
+if ENV['CI'] == 'true'
   require 'codeclimate-test-reporter'
   CodeClimate::TestReporter.start
 end

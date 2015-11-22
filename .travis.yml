@@ -7,3 +7,6 @@ before_install:
 script:
   - "bundle exec rspec spec/"
 sudo: false
+addons:
+  code_climate:
+    repo_token: 3e779acb537014cbfd1a7c48c7a509d3197afe962cd1738e832a46b439919e24
