@@ -1,3 +1,17 @@
+if ENV['COVERAGE'] == '1'
+  require 'simplecov'
+  SimpleCov.start do
+    load_profile 'test_frameworks'
+    add_group 'Libraries", "lib'
+  end
+end
+
+if ENV['CI']
+  puts 'reports to code climate'
+  require 'codeclimate-test-reporter'
+  CodeClimate::TestReporter.start
+end
+
 require 'slugable'
 require 'sqlite3'
 require 'ancestry'
