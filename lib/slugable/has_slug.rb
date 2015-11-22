@@ -7,8 +7,8 @@ module Slugable
 
   def self.configuration
     @configuration ||= Configuration.new(
-        :formatter          => Slugable::Formatter::Parameterize,
-        :tree_cache_storage => nil
+        formatter:          Slugable::Formatter::Parameterize,
+        tree_cache_storage: nil
     )
   end
 
@@ -25,9 +25,9 @@ module Slugable
     # it also generate method to_slug (depanding od :to param), which generate slug url for link_path
     #
     # has_slug                                # generate to_slug
-    # has_slug :from => :title                # generate to_slug
-    # has_slug :to => :seo_url                # generate to_url
-    # has_slug :from => :name, :to => :slug   # generate to_slug
+    # has_slug from: :title                # generate to_slug
+    # has_slug to: :seo_url                # generate to_url
+    # has_slug from: :name, to: :slug   # generate to_slug
     #
     def has_slug(options = {})
       MethodBuilder.build(self, options)
@@ -36,11 +36,11 @@ module Slugable
     class MethodBuilder
       def self.default_options
         {
-            :from               => :name,
-            :to                 => :slug,
-            :formatter          => Slugable.configuration.formatter,
-            :tree_cache_storage => Slugable.configuration.tree_cache_storage,
-            :to_slug_builder    => nil,
+            from:               :name,
+            to:                 :slug,
+            formatter:          Slugable.configuration.formatter,
+            tree_cache_storage: Slugable.configuration.tree_cache_storage,
+            to_slug_builder:    nil,
         }
       end
 
@@ -57,14 +57,14 @@ module Slugable
         if tree_cache_storage
           cache_layer = Slugable::CacheLayer.new(tree_cache_storage, model)
           builder_options = {
-              :slug_column => to,
-              :formatter => formatter,
-              :cache => cache_layer
+              slug_column: to,
+              formatter:   formatter,
+              cache:       cache_layer
           }
         else
           builder_options = {
-              :slug_column => to,
-              :formatter => formatter,
+              slug_column: to,
+              formatter:   formatter,
           }
         end
 

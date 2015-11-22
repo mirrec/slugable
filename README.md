@@ -32,11 +32,11 @@ in model use method has_slug
 class Item < ActiveRecord::Base
   attr_accessor :name, :slug
 
-  has_slug # default :from => :name, :to => :slug, :formatter => :parameterize, :cache_tree => true
+  has_slug # default from: :name, to: :slug, formatter: :parameterize, cache_tree: true
 end
 
 # then in code
-item = Item.create!(:name => "my name is")
+item = Item.create!(name: "my name is")
 item.slug # => "my-name-is"
 
 item.to_slug # => "my-name-is"
@@ -54,7 +54,7 @@ you can override defaults by passing hash
 class Page < ActiveRecord::Base
   attr_accessor :title, :seo_url
 
-  has_slug :from => :title, :to => :seo_url, :formatter => :my_style
+  has_slug from: :title, to: :seo_url, formatter: :my_style
 end
 
 class String
@@ -64,7 +64,7 @@ class String
 end
 
 # then in code
-page = Page.create!(:title => "my name is", :seo_url => "my url")
+page = Page.create!(title: "my name is", seo_url: "my url")
 page.seo_url # => "my-url"
 page.to_seo_url # => "my-url"
 ```
@@ -80,18 +80,18 @@ class Category < ActiveRecord::Base
 end
 
 # then in code
-root = Category.create!(:name => "root", :slug => "root")
+root = Category.create!(name: "root", slug: "root")
 root.slug # => "root"
 root.to_slug # => ["root"]
 
-child = Category.new(:name => "child", :slug => "child")
+child = Category.new(name: "child", slug: "child")
 child.parent = root
 child.save!
 
 child.slug # => "child"
 child.to_slug # => ["root", "child"]
 
-branch = Category.create!(:name => "branch", :slug => "branch")
+branch = Category.create!(name: "branch", slug: "branch")
 child.parent = branch
 child.slug = "renamed"
 
@@ -113,7 +113,7 @@ class Category < ActiveRecord::Base
   attr_accessor :name, :slug
 
   has_ancestry
-  has_slug :cache_tree => false
+  has_slug cache_tree: false
 end
 ```
 
