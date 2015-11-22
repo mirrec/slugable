@@ -20,6 +20,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency 'activerecord', '>= 3.0', '< 5.0'
   gem.add_runtime_dependency 'activesupport', '>= 3.0', '< 5.0'
 
+  gem.add_development_dependency 'appraisal', '~> 2.1.0'
   gem.add_development_dependency 'rspec', '~> 3.4.0'
   gem.add_development_dependency 'rake', '~> 0.9.2.2'
   gem.add_development_dependency 'sqlite3', '~> 1.3.6'

@@ -115,7 +115,7 @@ describe Slugable::HasSlug do
         child.parent = root
         child.save!
 
-        TreeCategory.update_all({slug: nil}, {id: root.id})
+        TreeCategory.where(id: root.id).update_all(slug: nil)
         hash_cache_storage.clear
 
         expect(child.to_slug).to eq ['child']

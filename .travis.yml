@@ -7,6 +7,11 @@ before_install:
 script:
   - "bundle exec rspec spec/"
 sudo: false
+gemfile:
+  - gemfiles/activerecord_3.2.gemfile
+  - gemfiles/activerecord_4.0.gemfile
+  - gemfiles/activerecord_4.1.gemfile
+  - gemfiles/activerecord_4.2.gemfile
 addons:
   code_climate:
     repo_token: 3e779acb537014cbfd1a7c48c7a509d3197afe962cd1738e832a46b439919e24
