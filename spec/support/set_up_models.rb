@@ -1,3 +1,5 @@
+require 'support/simple_to_slug'
+
 class FlatItem < ActiveRecord::Base
   has_slug
 end
@@ -18,4 +20,8 @@ end
 
 class FlatProduct < ActiveRecord::Base
   has_slug formatter: lambda { |string| 'hello-all-the-time' }
+end
+
+class FlatNews < ActiveRecord::Base
+  has_slug to_slug_builder: SimpleToSlug.new
 end

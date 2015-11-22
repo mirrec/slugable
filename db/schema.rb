@@ -37,4 +37,11 @@ ActiveRecord::Schema.define do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
+
+  create_table "flat_news", force: true do |t|
+    t.string "name"
+    t.string "slug"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 end

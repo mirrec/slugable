@@ -1,7 +1,0 @@
-engines:
-  bundler-audit:
-    enabled: false
-  fixme:
-    enabled: true
-  rubocop:
-    enabled: true
