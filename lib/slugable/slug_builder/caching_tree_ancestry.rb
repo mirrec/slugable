@@ -9,8 +9,7 @@ module Slugable
       end
 
       def to_slug(record)
-        slugs = record.path_ids.map{ |id| cache.read(slug_column, id) }.compact.select{|i| i.size > 0 }
-        slugs.empty? ? '' : slugs
+        record.path_ids.map{ |id| cache.read_slug(slug_column, id) }.select(&:present?)
       end
     end
   end

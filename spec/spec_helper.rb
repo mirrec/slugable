@@ -3,6 +3,8 @@ require 'sqlite3'
 require 'ancestry'
 require 'pry'
 
+ActiveRecord::Base.send :extend, Slugable::HasSlug
+
 ActiveRecord::Base.establish_connection adapter: 'sqlite3', database: ':memory:'
 
 load 'db/schema.rb'

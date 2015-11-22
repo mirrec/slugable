@@ -7,7 +7,7 @@ module Slugable
       @model = model
     end
 
-    def read(slug_column, id)
+    def read_slug(slug_column, id)
       storage.fetch(cache_key(slug_column, id)) { model.find(id).public_send(slug_column) }
     end
 

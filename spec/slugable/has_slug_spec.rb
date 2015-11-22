@@ -1,6 +1,5 @@
 require 'spec_helper'
 require 'support/hash_cache_storage'
-ActiveRecord::Base.send :extend, Slugable::HasSlug
 
 hash_cache_storage = HashCacheStorage.new
 
