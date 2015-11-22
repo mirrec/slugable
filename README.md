@@ -45,6 +45,8 @@ Or install it yourself as:
 ## Usage
 
 * default configuration converts name column to slug column and formatted by parameterize method from active support
+* it internally use callbacks to do the job
+* it also adds several convenient methods for generating url parts `to_slug`, `to_slug_was`, `to_slug_will`
 
 ```ruby
 class Item < ActiveRecord::Base
