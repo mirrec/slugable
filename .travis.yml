@@ -2,6 +2,7 @@ cache: bundler
 language: ruby
 rvm:
   - 1.9.3
+  - 2.2.2
 before_install:
   - rm .rvmrc
 script:
@@ -12,6 +13,14 @@ gemfile:
   - gemfiles/activerecord_4.0.gemfile
   - gemfiles/activerecord_4.1.gemfile
   - gemfiles/activerecord_4.2.gemfile
+matrix:
+  exclude:
+    - rvm: 1.9.3
+      gemfile: gemfiles/activerecord_4.0.gemfile
+    - rvm: 1.9.3
+      gemfile: gemfiles/activerecord_4.1.gemfile
+    - rvm: 1.9.3
+      gemfile: gemfiles/activerecord_4.2.gemfile
 addons:
   code_climate:
     repo_token: 3e779acb537014cbfd1a7c48c7a509d3197afe962cd1738e832a46b439919e24
