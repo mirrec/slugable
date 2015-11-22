@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/mirrec/slugable.svg?branch=master)](https://travis-ci.org/mirrec/slugable)
 [![Gem Version](https://badge.fury.io/rb/slugable.svg)](https://badge.fury.io/rb/slugable)
+[![Code Climate](https://codeclimate.com/github/mirrec/slugable/badges/gpa.svg)](https://codeclimate.com/github/mirrec/slugable)
+[![Test Coverage](https://codeclimate.com/github/mirrec/slugable/badges/coverage.svg)](https://codeclimate.com/github/mirrec/slugable/coverage)
 
 * adds support for seo friendly url
 * one helper method has_slug
