@@ -18,18 +18,18 @@ describe Slugable::HasSlug do
     context 'default options' do
       it 'creates all needed methods for slug' do
         record = FlatItem.new
-        record.should respond_to :slug_builder_for_slug
-        record.should respond_to :prepare_slug_in_slug
-        record.should respond_to :to_slug
-        record.should respond_to :to_slug_was
-        record.should respond_to :to_slug_will
+        expect(record).to respond_to :slug_builder_for_slug
+        expect(record).to respond_to :prepare_slug_in_slug
+        expect(record).to respond_to :to_slug
+        expect(record).to respond_to :to_slug_was
+        expect(record).to respond_to :to_slug_will
       end
     end
 
     context 'option with cache' do
       it 'creates method that updates cache' do
         record = TreeItem.new
-        record.should respond_to :update_my_slug_cache
+        expect(record).to respond_to :update_my_slug_cache
       end
     end
   end
@@ -40,33 +40,33 @@ describe Slugable::HasSlug do
         name = 'my name is'
 
         item = FlatItem.create!(name: name)
-        item.slug.should eq 'my-name-is'
+        expect(item.slug).to eq 'my-name-is'
       end
 
       it 'fills in slug from attribute name if parameterize version of slug is blank' do
         item = FlatItem.create!(name: 'my name is', slug: '')
-        item.slug.should eq 'my-name-is'
+        expect(item.slug).to eq 'my-name-is'
       end
 
       it 'does not change slug attribute if slug is present' do
         item = FlatItem.create!(name: 'my name is', slug: 'my url')
-        item.slug.should eq 'my-url'
+        expect(item.slug).to eq 'my-url'
       end
     end
 
     context 'given options' do
       it 'creates fill_slug_from_title_to_seo_url' do
-        FlatPage.new.should respond_to :prepare_slug_in_seo_url
+        expect(FlatPage.new).to respond_to :prepare_slug_in_seo_url
       end
 
       it 'fills in slug parameter from attribute title and parametrize it' do
         page = FlatPage.create!(title: 'my name is')
-        page.seo_url.should eq 'my-name-is'
+        expect(page.seo_url).to eq 'my-name-is'
       end
 
       it 'fills in slug parameter and use custom formatter' do
         product = FlatProduct.create!(name: 'my name is', slug: 'product')
-        product.slug.should eq 'hello-all-the-time'
+        expect(product.slug).to eq 'hello-all-the-time'
       end
     end
   end
@@ -74,28 +74,28 @@ describe Slugable::HasSlug do
   describe '#to_slug' do
     context 'default options' do
       it 'defines to_slug method' do
-        FlatItem.new.should respond_to :to_slug
+        expect(FlatItem.new).to respond_to :to_slug
       end
 
       it 'returns slug in string' do
         item = FlatItem.create!(name: 'my name is', slug: 'my-url')
-        item.to_slug.should eq 'my-url'
+        expect(item.to_slug).to eq 'my-url'
       end
     end
 
     context 'given options' do
       it 'defines method to_seo_url' do
-        FlatPage.new.should respond_to :to_seo_url
+        expect(FlatPage.new).to respond_to :to_seo_url
       end
 
       it 'returns slug in string' do
         page = FlatPage.create!(title: 'my name is', seo_url: 'my-url')
-        page.to_seo_url.should eq 'my-url'
+        expect(page.to_seo_url).to eq 'my-url'
       end
 
       it 'returns result from custom to_slug_builder' do
         news = FlatNews.create!(name: 'news')
-        news.to_slug.should eq "to_slug_#{news.id}"
+        expect(news.to_slug).to eq "to_slug_#{news.id}"
       end
     end
 
@@ -106,7 +106,7 @@ describe Slugable::HasSlug do
         child.parent = root
         child.save!
 
-        child.to_slug.should eq ['root', 'child']
+        expect(child.to_slug).to eq ['root', 'child']
       end
 
       it 'skips nil values from slug path' do
@@ -118,13 +118,13 @@ describe Slugable::HasSlug do
         TreeCategory.update_all({slug: nil}, {id: root.id})
         hash_cache_storage.clear
 
-        child.to_slug.should eq ['child']
+        expect(child.to_slug).to eq ['child']
       end
 
       it 'returns correct results also with caching support' do
         child = TreeItem.create!(slug: 'child', parent: TreeItem.create!(slug: 'root'))
-        child.to_slug.should eq ['root', 'child']
-        child.to_slug.should eq ['root', 'child']
+        expect(child.to_slug).to eq ['root', 'child']
+        expect(child.to_slug).to eq ['root', 'child']
       end
     end
   end
@@ -132,30 +132,30 @@ describe Slugable::HasSlug do
   describe '#to_slug_was' do
     context 'default options' do
       it 'defines method to_slug_was' do
-        FlatItem.new.should respond_to :to_slug_was
+        expect(FlatItem.new).to respond_to :to_slug_was
       end
 
       it 'returns old slug in string' do
         item = FlatItem.create!(name: 'my name is', slug: 'my-url')
         item.slug = 'new-slug'
-        item.to_slug_was.should eq 'my-url'
+        expect(item.to_slug_was).to eq 'my-url'
       end
     end
 
     context 'given options' do
       it 'defines method to_seo_url_was' do
-        FlatPage.new.should respond_to :to_seo_url_was
+        expect(FlatPage.new).to respond_to :to_seo_url_was
       end
 
       it 'returns future slug in string' do
         page = FlatPage.create!(title: 'my name is', seo_url: 'my-url')
         page.seo_url = 'hello-world'
-        page.to_seo_url_was.should eq 'my-url'
+        expect(page.to_seo_url_was).to eq 'my-url'
       end
 
       it 'returns result from custom to_slug_builder' do
         news = FlatNews.create!(name: 'news')
-        news.to_slug_was.should eq "to_slug_was_#{news.id}"
+        expect(news.to_slug_was).to eq "to_slug_was_#{news.id}"
       end
     end
 
@@ -167,7 +167,7 @@ describe Slugable::HasSlug do
 
         child.parent = root
         child.slug = 'moved'
-        child.to_slug_was.should eq ['child']
+        expect(child.to_slug_was).to eq ['child']
       end
     end
   end
@@ -175,30 +175,30 @@ describe Slugable::HasSlug do
   describe '#to_slug_will' do
     context 'default options' do
       it 'defines method to_slug_will' do
-        FlatItem.new.should respond_to :to_slug_will
+        expect(FlatItem.new).to respond_to :to_slug_will
       end
 
       it 'returns future slug in string' do
         item = FlatItem.create!(name: 'my name is', slug: 'my-url')
         item.slug = 'new slug'
-        item.to_slug_will.should eq 'new-slug'
+        expect(item.to_slug_will).to eq 'new-slug'
       end
     end
 
     context 'given options' do
       it 'defines method to_seo_url_will' do
-        FlatPage.new.should respond_to :to_seo_url_will
+        expect(FlatPage.new).to respond_to :to_seo_url_will
       end
 
       it 'returns slug in string' do
         page = FlatPage.create!(title: 'my name is', seo_url: 'my-url')
         page.seo_url = 'hello world'
-        page.to_seo_url_will.should eq 'hello-world'
+        expect(page.to_seo_url_will).to eq 'hello-world'
       end
 
       it 'returns result from custom to_slug_builder' do
         news = FlatNews.create!(name: 'news')
-        news.to_slug_will.should eq "to_slug_will_#{news.id}"
+        expect(news.to_slug_will).to eq "to_slug_will_#{news.id}"
       end
     end
 
@@ -210,7 +210,7 @@ describe Slugable::HasSlug do
 
         child.parent = root
         child.slug = 'move d'
-        child.to_slug_will.should eq ['root', 'move-d']
+        expect(child.to_slug_will).to eq ['root', 'move-d']
       end
     end
   end

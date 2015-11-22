@@ -19,20 +19,20 @@ describe Slugable::SlugBuilder::CachingTreeAncestry do
       root = model.create!(slug: 'root')
       child = model.create!(slug: 'child', parent: root)
 
-      cache.stub(:read_slug).with(:slug, root.id).and_return('root-cached')
-      cache.stub(:read_slug).with(:slug, child.id).and_return('child-cached')
+      allow(cache).to receive(:read_slug).with(:slug, root.id).and_return('root-cached')
+      allow(cache).to receive(:read_slug).with(:slug, child.id).and_return('child-cached')
 
-      subject.to_slug(child).should eq ['root-cached', 'child-cached']
+      expect(subject.to_slug(child)).to eq ['root-cached', 'child-cached']
     end
 
     it 'removes blank values from array of record path' do
       root = model.create!(slug: 'root')
       child = model.create!(slug: 'child', parent: root)
 
-      cache.stub(:read_slug).with(:slug, root.id).and_return('')
-      cache.stub(:read_slug).with(:slug, child.id).and_return(nil)
+      allow(cache).to receive(:read_slug).with(:slug, root.id).and_return('')
+      allow(cache).to receive(:read_slug).with(:slug, child.id).and_return(nil)
 
-      subject.to_slug(child).should eq []
+      expect(subject.to_slug(child)).to eq []
     end
   end
 end

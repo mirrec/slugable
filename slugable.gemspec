@@ -21,7 +21,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency 'activesupport', '>= 3.0'
   gem.add_runtime_dependency 'wnm_support', '~> 0.0.4'
 
-  gem.add_development_dependency 'rspec', '~> 2.11.0'
+  gem.add_development_dependency 'rspec', '~> 3.4.0'
   gem.add_development_dependency 'rake', '~> 0.9.2.2'
   gem.add_development_dependency 'sqlite3', '~> 1.3.6'
   gem.add_development_dependency 'ancestry', '~> 1.3.0'

@@ -15,15 +15,15 @@ describe Slugable::SlugBuilder::TreeAncestry do
     it 'returns array of slugs column from record path' do
       root = model.create!(slug: 'root')
       child = model.create!(slug: 'child', parent: root)
-      subject.to_slug(child).should eq ['root', 'child']
+      expect(subject.to_slug(child)).to eq ['root', 'child']
     end
 
     it 'removes blank values from array of record path' do
       child = model.new(slug: '')
-      subject.to_slug(child).should eq []
+      expect(subject.to_slug(child)).to eq []
 
       child = model.new(slug: nil)
-      subject.to_slug(child).should eq []
+      expect(subject.to_slug(child)).to eq []
     end
   end
 
@@ -36,7 +36,7 @@ describe Slugable::SlugBuilder::TreeAncestry do
       child.parent = new_root
       child.slug = 'new-child'
 
-      subject.to_slug_was(child).should eq ['root', 'child']
+      expect(subject.to_slug_was(child)).to eq ['root', 'child']
     end
   end
 
@@ -49,7 +49,7 @@ describe Slugable::SlugBuilder::TreeAncestry do
       child.parent = new_root
       child.slug = 'new-child'
 
-      subject.to_slug_will(child).should eq ['new-root', 'new-child-formatted']
+      expect(subject.to_slug_will(child)).to eq ['new-root', 'new-child-formatted']
     end
   end
 end
