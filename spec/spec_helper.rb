@@ -1,3 +1,4 @@
+puts ENV.inspect
 if ENV['COVERAGE'] == '1'
   require 'simplecov'
   SimpleCov.start do
