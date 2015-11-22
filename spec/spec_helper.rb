@@ -1,4 +1,3 @@
-puts ENV.inspect
 if ENV['COVERAGE'] == '1'
   require 'simplecov'
   SimpleCov.start do
@@ -7,7 +6,7 @@ if ENV['COVERAGE'] == '1'
   end
 end
 
-if ENV['CI'] == 'true'
+if ENV['CI'] == 'true' && ENV['TRAVIS_RUBY_VERSION'] == '2.2.2' && ENV['BUNDLE_GEMFILE'] =~ /activerecord_4\.2/
   require 'codeclimate-test-reporter'
   CodeClimate::TestReporter.start
 end
