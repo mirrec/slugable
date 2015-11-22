@@ -6,6 +6,7 @@
 [![Test Coverage](https://codeclimate.com/github/mirrec/slugable/badges/coverage.svg)](https://codeclimate.com/github/mirrec/slugable/coverage)
 
 * adds support for creating seo friendly url to your active record models and simplifies generating url
+* gem is tests against rails 3.2, 4.0, 4.1, 4.2 and ruby 1.9.3. and 2.2.2
 
 ```ruby
 # model
@@ -135,7 +136,7 @@ You can set up default formatter and default tree_cache_storage in you initializ
 
 ```ruby
 class MyFormatter
-  def format(string)
+  def self.call(string)
     string.my_own_parameterize
   end
 end
