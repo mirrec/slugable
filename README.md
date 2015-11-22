@@ -44,7 +44,7 @@ Or install it yourself as:
 
 ## Usage
 
-* default configuration converts name column to slug column
+* default configuration converts name column to slug column and formatted by parameterize method from active support
 
 ```ruby
 class Item < ActiveRecord::Base
@@ -59,7 +59,7 @@ item.slug # => "my-name-is"
 
 item.to_slug # => "my-name-is"
 
-item.slug = "new-slug
+item.slug = "new-slug"
 
 item.to_slug_was  # => "my-name-is"
 item.to_slug_will # => "new-slug"
@@ -148,7 +148,7 @@ end
 
 ```ruby
 # you own to slug builder
-class SimpleToSlug
+class StupidToSlug
   def to_slug(record)
     "to_slug_#{record.id}"
   end
@@ -166,14 +166,14 @@ end
 class News < ActiveRecord::Base
   # columns: :id, :name, :slug
 
-  has_slug to_slug_builder: SimpleToSlug.new
+  has_slug to_slug_builder: StupidToSlug.new
 end
 
 # code
 news = News.create!(name: 'whatever')
-news.to_slug.should eq "to_slug_#{news.id}"
-news.to_slug_was.should eq "to_slug_was_#{news.id}"
-news.to_slug_will.should eq "to_slug_will_#{news.id}"
+news.to_slug      # => "to_slug_#{news.id}"
+news.to_slug_was  # => "to_slug_was_#{news.id}"
+news.to_slug_will # => "to_slug_will_#{news.id}"
 ```
 
 ## Contributing
